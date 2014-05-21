@@ -4,6 +4,7 @@ var lib = require( './lib.js' );
 var pgsql = require('./db.js').pg;
 // Routes for our application
 var routes = require('./routes'); 
+var db_app_logic = require('./db_app_logic.js');
 
 // express
 var express = require('express');
@@ -32,6 +33,9 @@ pgsql.connect(connectionString, function(err,db,done)
   app.use(bodyParser());
   // middleware to provide 'req.session'
   app.use(expressSession());
+
+  // add application logic to db
+  db_app_logic(db); 
 
   // set up application routes & middleware
   routes(app,db);

@@ -1,5 +1,5 @@
-var sessionHandler = require('./session.js');
-var contentHandler = require('./content.js');
+var SessionHandler = require('./session.js');
+var ContentHandler = require('./content.js');
 var errorHandlers = require('./error.js');
 
 module.exports = exports = function(app, db) 
