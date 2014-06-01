@@ -8,11 +8,11 @@ exports.handle404 = function(req, res, next) {
 
 exports.errorHandler = function(err, req, res, next) {
     "use strict";
-    console.error(err.message);
-    console.error(err.stack);
+    var err_msg = err.status + ' ' + err.message ;
+    console.error( err_msg );
+    console.error( 'Stack: ' + err.stack);
     res.status(err.status || 500);
-    //res.render('error_template', { error: err });
-    res.send( 'error: ' + err.toString() );
+    res.send( err_msg ) ;
 }
 
 exports.error_handlers = function(app) {

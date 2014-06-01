@@ -15,43 +15,60 @@ path  "/inspect/"
 query {"q":"soft"}
 */
 
-exports.staticFileMiddleware = function( static_dir )
+function staticFileMiddleware( str_or_array )
 {
-  // determine fully-qualified directory name
-  var path_resolved = path.resolve( static_dir );
+  var that = this;
+  this.paths = [];
 
-  // calls next() if file not found, else streams file to client
-  return function( req, res, next ) 
+  this.addPaths = function(p) {
+    if (p instanceof Array) {
+      this.paths = this.paths.concat(p);
+    } else {
+      this.paths.push(p);  
+    }
+    // convert to fully qualified paths
+    this.paths = this.paths.map(function(e){return path.resolve(e);});
+  };
+
+  if ( arguments.length > 0 )
+    this.addPaths(str_or_array);
+
+
+  this.getMiddleware = function() 
   {
-    if ( !req ) {
-      return console.log('no req!');
-    }
-    if ( !req.url ) {
-      return console.log('no req.url!');
-    }
+    // calls next() if file not found, else streams file to client
+    return function( req, res, next ) 
+    {
+      for ( var i = 0, l = that.paths.length; i < l; i++ )
+      {
+        // attach req.url to path_resolved, 
+        var file = that.paths[i];
+        if ( file[file.length-1] !== '/' && req.url[0] !== '/' ) 
+          file += '/';
+        file += req.url; 
 
-    // attach req.url to path_resolved, 
-    var file = path_resolved;
-    if ( path_resolved[path_resolved.length-1] !== '/' && req.url[0] !== '/' ) 
-      file += '/';
-    file += req.url; 
+        console.log("trying: \""+file+'"');
 
-    // check if file exists, 
-    fs.exists( file, function(found) {
-      if ( !found ) {
-        console.log( "failed to locate static file: \"" + file + '"' );
-        return next();
-      }
+        // check if file exists
+        // send the first one that matches
+        if ( fs.existsSync( file ) )
+        {
+          var mimetype = _mime_from_suffix(file);
+          var rs = fs.createReadStream(file);
+          //rs.on('error', reportError.bind(null,res) );
+          res.writeHead(200, {"Content-Type": mimetype });
+          rs.pipe(res);
+          return;
+        }
+      } // for
 
-      var mimetype = _mime_from_suffix(file);
-      var rs = fs.createReadStream(file);
-      //rs.on('error', reportError.bind(null,res) );
-      res.writeHead(200, {"Content-Type": mimetype });
-      rs.pipe(res);
-    });
-  }
-
+      // didn't find it
+      return next();
+    }; // return function
+  } // getMiddleware
 };
+
+exports.staticFileMiddleware = staticFileMiddleware;
 
 exports.static_file = function( file, res ) {
   fs.readFile( file, 'utf-8', function (error, data) {

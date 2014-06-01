@@ -11,12 +11,10 @@ module.exports = exports = function(app, db)
     //var errorHandler = new ErrorHandler(db); //do it this way if you wanted to log your errors in the db
 
     // Middleware to see if a user is logged in
-    //app.use(sessionHandler.isLoggedInMiddleware);
+    app.use(sessionHandler.isLoggedInMiddleware);
 
     // Login form
     app.get('/login', sessionHandler.displayLoginPage);
-
-/*
     app.post('/login', sessionHandler.handleLoginRequest);
 
     // Logout page
@@ -29,14 +27,15 @@ module.exports = exports = function(app, db)
 
     // Welcome page
     app.get("/welcome", sessionHandler.displayWelcomePage);
-*/
 
     // The main page of the site
     //app.get('/', contentHandler.displayMainPage);
 
-    // after the routes are checked, try to exact-match static file
-    app.use( helper.staticFileMiddleware('./public') );
+    // after the routes are checked, try to match static file
+    var static_file = new helper.staticFileMiddleware('./public');
+    app.use( static_file.getMiddleware() );
 
+    // failing routes, and static-files, send errors
     app.use(errorHandler.handle404);
     app.use(errorHandler.errorHandler);
 };

@@ -36,10 +36,8 @@ pgsql.connect(connectionString, function(err,db,done)
   // add application logic to db
   db_app_logic.setup(db); 
 
-  // run routes before static files
+  // apply the routes 
   routes(app,db);
-
-  //app.use(express.static(__dirname + '/public'));
 
   var port = 3000;
   app.listen(port);
