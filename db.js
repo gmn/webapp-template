@@ -1,7 +1,7 @@
 var conString = "postgres://rssdude:password@localhost/rsstool";
-var pg = require('pg');
 
-exports.db = exports.pg = pg;
+var pg = null;
+exports.db = exports.pg = pg = require('pg');
 
 //disconnect client when all queries are finished
 //client.on('drain', client.end.bind(client)); 

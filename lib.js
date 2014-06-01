@@ -170,20 +170,18 @@
     exports.list_dir = list_dir;
 
 /// expecting a CALLBACK(), and, space-separated string like an actual commandline
-function system( callback, commandline )
+function system( commandline, callback )
 {
-  if ( arguments.length < 2 ) {
-    process.stdout.write( 'stderr: ' + 'system() expects 2 arguments: callback(), "command"' );
+  if ( arguments.length < 1 ) {
+    process.stdout.write( 'error: usage: system( cmdline, callback );' );
     return;
   }
 
   var args = '';
-  for ( var i = 1; i < arguments.length; i++ ) {
-    if ( arguments[i] instanceof Array )
-      args += ' ' + arguments[i].join(' ');
-    else
-      args += ' ' + arguments[i];
-  }
+  if ( arguments[0] instanceof Array )
+    args += ' ' + arguments[0].join(' ');
+  else
+    args += ' ' + arguments[0];
   args = args.trim().split(/\s+/);
 
   var res = [];
@@ -201,16 +199,13 @@ function system( callback, commandline )
   });
 
   child.on('close', function (code) {
-    //return callback( JSON.stringify(res) );
-    return callback(res.join(' '));
+    if ( callback )
+      return callback(res.join(' '));
   });
 }
 exports.system = system;
+//system( 'ls -ltr', function(s) { process.stdout.write(s) } );
 
-/*
-var p = function(s) { process.stdout.write(s); };
-system( p, 'ls -ltr' );
-*/
 
 function objEmpty(obj) {
   if ( Object && Object.keys )

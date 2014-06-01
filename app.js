@@ -2,6 +2,7 @@
 // modules
 var lib = require( './lib.js' );
 var pgsql = require('./db.js').pg;
+
 // Routes for our application
 var routes = require('./routes'); 
 var db_app_logic = require('./db_app_logic.js');
@@ -25,8 +26,6 @@ pgsql.connect(connectionString, function(err,db,done)
     next();
   });
 
-  app.use(express.static(__dirname + '/public'));
-
   // middleware to populate 'req.cookies'
   app.use(cookieParser('shhhh, very secret'));
   // middleware to populate 'req.body'
@@ -35,10 +34,12 @@ pgsql.connect(connectionString, function(err,db,done)
   app.use(expressSession());
 
   // add application logic to db
-  db_app_logic(db); 
+  db_app_logic.setup(db); 
 
-  // set up application routes & middleware
+  // run routes before static files
   routes(app,db);
+
+  //app.use(express.static(__dirname + '/public'));
 
   var port = 3000;
   app.listen(port);
