@@ -7,8 +7,8 @@ var crypto = require('crypto');
 var helper = require('./helper');
 
 // Session Manager (DAO, Data Access Object)
-exports.SessionManager = function SessionManager() {
-
+exports.SessionManager = function SessionManager() 
+{
   // user didn't use 'new' keyword
   if (false === (this instanceof SessionManager)) {
     return new SessionManager();
@@ -26,7 +26,6 @@ exports.SessionManager = function SessionManager() {
     var queryable = require('queryable');
     that.sessions = queryable.open(db_name);
   };
-
 
   //
   // PUBLIC
@@ -64,7 +63,10 @@ exports.SessionManager = function SessionManager() {
 };
 
 
+
 /* 
+ * SessionPages
+ *
  * Handles top-level pages. Checks if logged in and:
  *  - displays: login, logout, signup, welcome (placeholder to show logging in works)
  *  - handles: login, logout, signup
@@ -73,7 +75,7 @@ function SessionPages(db)
 {
   // user didn't use 'new' keyword
   if (false === (this instanceof SessionPages)) {
-    return new SessionPages();
+    return new SessionPages(db);
   }
 
   var static_pages_dir = 'pages/';
@@ -99,10 +101,30 @@ function SessionPages(db)
   };
 
   this.handleLoginRequest = function(req, res, next) {
-    var username = req.body.username;
-    var password = req.body.password;
-    console.log("user logged in with username: " + username + " pass: " + password);
-    next();
+    if ( !req.body || !req.body.username || !req.body.password )
+      return res.redirect('/login');
+    var username = req.body.username.trim();
+    var password = req.body.password.trim();
+    console.log("login attempt => username: " + username + " pass: " + password);
+
+    db.findByName( username, function(err, rows) {
+  
+      if ( !rows || rows.length < 1 ) {
+        console.log( "user not found" );
+        return res.redirect('/login');
+      }
+
+      // found user, now verify password
+
+      sess_manager.startSession(form.username, function(err, session_id) {
+        "use strict";
+        if (err) return next(err);
+        res.cookie('session_id', session_id);
+        return res.redirect('/welcome');
+      });
+
+    });
+
   };
 
   this.displayGoodbyePage = function(req, res, next) {
