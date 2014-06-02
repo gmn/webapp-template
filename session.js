@@ -69,14 +69,14 @@ exports.SessionManager = function SessionManager() {
  *  - displays: login, logout, signup, welcome (placeholder to show logging in works)
  *  - handles: login, logout, signup
  */
-function SessionPages()
+function SessionPages(db)
 {
-
   // user didn't use 'new' keyword
   if (false === (this instanceof SessionPages)) {
     return new SessionPages();
   }
 
+  var static_pages_dir = 'pages/';
   var sess_manager = new exports.SessionManager();
 
   /*
@@ -95,7 +95,7 @@ function SessionPages()
 
 
   this.displayLoginPage = function(req, res, next) { 
-    helper.static_file( 'public/login.html', res );
+    helper.static_file( static_pages_dir + 'login.html', res );
   };
 
   this.handleLoginRequest = function(req, res, next) {
@@ -105,24 +105,55 @@ function SessionPages()
     next();
   };
 
-  this.displayLogoutPage = function(req, res, next) {
-    helper.static_file( 'public/logout.html', res );
+  this.displayGoodbyePage = function(req, res, next) {
+    helper.static_file( static_pages_dir + 'goodbye.html', res );
   };
 
   this.handleLogoutRequest = function(req, res, next) {
-    helper.static_file( 'public/logout.html', res );
+    if ( ! req.cookies.session_id )
+      return console.log( "session not set" );
+    sess_manager.endSession( req.cookies.session_id, function(err, num_rmvd ) {
+      res.cookie('session_id', '', {expires: new Date(Date.now())} );
+      return res.redirect('/goodbye');
+    });
   };
 
   this.displaySignupPage = function(req, res, next) {
-    helper.static_file( 'public/signup.html', res );
+    helper.static_file( static_pages_dir + 'signup.html', res );
   };
 
   this.handleSignupRequest = function(req, res, next) {
-    helper.static_file( 'public/signup.html', res );
+    // sanitize
+    var form = {};
+    for (i in req.body) {
+      if ( req.body.hasOwnProperty(i) )
+        form[i] = req.body[i] ? req.body[i].trim() : '';
+    }
+
+
+    db.userSignup( form, function(err,result) {
+      
+      if ( err ) {
+        console.log("handleSignupRequest: error: " + err );
+        return res.redirect('/signup');
+      }
+
+      sess_manager.startSession(form.username, function(err, session_id) {
+        "use strict";
+        if (err) return next(err);
+        res.cookie('session_id', session_id);
+        return res.redirect('/welcome');
+      });
+    });
   };
 
   this.displayWelcomePage = function(req, res, next) {
-    helper.static_file( 'public/welcome.html', res );
+    "use strict";
+    if (!req.username) {
+      console.log("welcome: can't identify user...redirecting to login page");
+      return res.redirect("/login");
+    }
+    helper.static_file( static_pages_dir + 'welcome.html', res );
   };
 
 }

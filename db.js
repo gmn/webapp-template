@@ -23,7 +23,7 @@ function get_users(callback)
       }
 
       if ( callback )
-        callback(result.rows);
+        callback(null,result.rows);
 
       client.end();
     });
@@ -51,7 +51,7 @@ function query( qstring, callback )
       }
 
       if ( callback )
-        callback(result.rows);
+        callback(null,result.rows);
 
       client.end();
     });
@@ -60,6 +60,7 @@ function query( qstring, callback )
 exports.query = query;
 */
 
+/*
 function get_users2(callback) 
 {
   pg.connect(conString, function(err,client,done) 
@@ -76,21 +77,26 @@ function get_users2(callback)
       }
 
       if ( callback )
-        callback(result.rows);
+        callback(null,result.rows);
     });
   });
 }
 exports.get_users = get_users2;
+*/
 
 function query( qstring, callback ) 
 {
   if ( arguments.length < 1 ) 
-    return console.error( "not enough arguments to db.query" );
+    return console.log( "db.query: not enough arguments to db.query" );
+
+  if ( arguments.length < 2 ) 
+    callback = function(){};
 
   pg.connect(conString, function(err,client,done) 
   {
     if (err) {
-      return console.error('error fetching client from pool', err);
+      console.log('db.query: error fetching client from pool', err);
+      return callback('db.query: error fetching client from pool: '+ err);
     }
 
     client.query( qstring, function(err, result) 
@@ -98,11 +104,13 @@ function query( qstring, callback )
       done();
 
       if (err) {
-        return console.error('error running query', err);
+        console.log('db.query: error running query', err);
+        return callback('db.query: error running query: '+ err);
       }
 
-      if ( callback )
-        callback(result.rows);
+console.log("in query: \""+qstring+"\" -> \"" + JSON.stringify(result) + '"' );
+
+      callback(null,result.rows);
     });
   });
 }

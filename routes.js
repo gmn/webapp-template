@@ -18,8 +18,8 @@ module.exports = exports = function(app, db)
     app.post('/login', sessionHandler.handleLoginRequest);
 
     // Logout page
-    app.get('/logout', sessionHandler.displayLogoutPage);
     app.post('/logout', sessionHandler.handleLogoutRequest);
+    app.get('/goodbye', sessionHandler.displayGoodbyePage);
 
     // Signup form
     app.get('/signup', sessionHandler.displaySignupPage);
@@ -27,6 +27,7 @@ module.exports = exports = function(app, db)
 
     // Welcome page
     app.get("/welcome", sessionHandler.displayWelcomePage);
+    app.get("/", sessionHandler.displayWelcomePage);
 
     // The main page of the site
     //app.get('/', contentHandler.displayMainPage);

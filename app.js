@@ -1,7 +1,7 @@
 
 // modules
 var lib = require( './lib.js' );
-var pgsql = require('./db.js').pg;
+var pg = require('pg');
 
 // Routes for our application
 var routes = require('./routes'); 
@@ -18,8 +18,12 @@ var expressSession = require('express-session');
 
 var connectionString = "postgres://rssdude:password@localhost/rsstool";
 
-pgsql.connect(connectionString, function(err,db,done) 
+pg.connect(connectionString, function(err, db, done) 
 {
+  if ( err ) {
+    return console.log("Postgre connection error: "+err.toString());
+  }
+
   // simple logger
   app.use(function(req, res, next){
     console.log('%s %s', req.method, req.url);
@@ -34,7 +38,7 @@ pgsql.connect(connectionString, function(err,db,done)
   app.use(expressSession());
 
   // add application logic to db
-  db_app_logic.setup(db); 
+  db_app_logic.setup(db,done); 
 
   // apply the routes 
   routes(app,db);
