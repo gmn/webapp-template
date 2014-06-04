@@ -6,6 +6,14 @@
 var crypto = require('crypto');
 var helper = require('./helper');
 
+function _randHash() {
+  var current_date = (new Date()).valueOf().toString();
+  var random = Math.random().toString();
+  var session_id = crypto.createHash('sha1').update(current_date + random).digest('hex');
+  return session_id;
+}
+
+
 // Session Manager (DAO, Data Access Object)
 exports.SessionManager = function SessionManager() 
 {
@@ -27,6 +35,7 @@ exports.SessionManager = function SessionManager()
     that.sessions = queryable.open(db_name);
   };
 
+
   //
   // PUBLIC
   //
@@ -37,17 +46,15 @@ exports.SessionManager = function SessionManager()
     // create queryable table if not exist, if exist load from it
     _loadSessionsDb();
 
-    var current_date = (new Date()).valueOf().toString();
-    var random = Math.random().toString();
-    var session_id = crypto.createHash('sha1').update(current_date + random).digest('hex');
-    var session_obj = {'username': username, 'sess_id': session_id}
+    var session_id = _randHash();
+    var session_obj = {'username': username, 'session_id': session_id}
     this.sessions.insert(session_obj);
     callback(null,session_id);
   };
 
   this.endSession = function(session_id, callback) {
     _loadSessionsDb();
-    var res = this.sessions.remove({ 'sess_id' : session_id });
+    var res = this.sessions.remove({ 'session_id' : session_id });
     callback(null,res);
   };
 
@@ -55,7 +62,7 @@ exports.SessionManager = function SessionManager()
     if ( !session_id )
       return callback(null,null);
     _loadSessionsDb();
-    var res = this.sessions.find( {'sess_id':session_id} ).sort( {date_created:-1} ).limit(1);
+    var res = this.sessions.find( {'session_id':session_id} ).sort( {date_created:-1} ).limit(1);
     if ( res && res._data && res._data[0] && res._data[0].username && res.length == 1  )
       return callback(null, res._data[0].username);
     return callback(new Error("Session: " + session_id + " does not exist"));
@@ -115,16 +122,16 @@ function SessionPages(db)
       }
 
       // found user, now verify password
+      if ( rows[0].password !== crypto.createHash('sha1').update(rows[0].salt+password).digest('hex') )
+        return res.redirect('/login');
 
-      sess_manager.startSession(form.username, function(err, session_id) {
+      sess_manager.startSession(username, function(err, session_id) {
         "use strict";
         if (err) return next(err);
         res.cookie('session_id', session_id);
         return res.redirect('/welcome');
       });
-
     });
-
   };
 
   this.displayGoodbyePage = function(req, res, next) {
@@ -151,7 +158,12 @@ function SessionPages(db)
       if ( req.body.hasOwnProperty(i) )
         form[i] = req.body[i] ? req.body[i].trim() : '';
     }
+    // create a random salt
+    form['salt'] = _randHash();
+    form['password'] = crypto.createHash('sha1').update(form['salt']+form['password']).digest('hex');
 
+    // validate form
+    // ...
 
     db.userSignup( form, function(err,result) {
       
@@ -172,7 +184,7 @@ function SessionPages(db)
   this.displayWelcomePage = function(req, res, next) {
     "use strict";
     if (!req.username) {
-      console.log("welcome: can't identify user...redirecting to login page");
+      console.log("WelcomePage: can't identify user...redirecting to login page");
       return res.redirect("/login");
     }
     helper.static_file( static_pages_dir + 'welcome.html', res );

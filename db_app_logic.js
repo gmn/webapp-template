@@ -5,7 +5,7 @@ exports.setup = function(db,done)
 {
   function query_callback(err, result, callback)
   {
-    //done();
+    //done(); // closes client connection apparently 
 
     if (err) {
       var m = 'db.query: error running query: "'+ err + '"';
@@ -47,7 +47,7 @@ exports.setup = function(db,done)
           return callback( "email already taken" );
 
         // no matching name or email, go ahead and create user, and redirect
-        db.query( "INSERT INTO users(username,password,email,date_added) VALUES ('"+form.username+"','"+form.password+"','"+form.email+"',NOW());", function(e,r) { query_callback(e,r,callback); } );
+        db.query( "INSERT INTO users(username,password,email,date_added,salt) VALUES ('"+form.username+"','"+form.password+"','"+form.email+"',NOW(),'"+form.salt+"');", function(e,r) { query_callback(e,r,callback); } );
 
       });
     });

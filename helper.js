@@ -13,6 +13,7 @@ method  "GET"
 url "/inspect/?q=soft"
 path  "/inspect/"
 query {"q":"soft"}
+body {"form":"fields","name":"gavin belson"}
 */
 
 function staticFileMiddleware( str_or_array )
@@ -33,12 +34,21 @@ function staticFileMiddleware( str_or_array )
   if ( arguments.length > 0 )
     this.addPaths(str_or_array);
 
+/*
+ *  TODO: read directory once and store as hash table, instead of actively 
+ *        combing the OS for each file every time it is requested.
+ *  BONUS:  write your own version (or find one in NPM) of memcached, to 
+ *          create static page cache, to speed up loading.
+ *  BONUS2: profile to find the bottlenecks
+ *  BONUS3: use nginx for all static serves
+*/
 
   this.getMiddleware = function() 
   {
     // calls next() if file not found, else streams file to client
     return function( req, res, next ) 
     {
+
       for ( var i = 0, l = that.paths.length; i < l; i++ )
       {
         // attach req.url to path_resolved, 
@@ -47,7 +57,7 @@ function staticFileMiddleware( str_or_array )
           file += '/';
         file += req.url; 
 
-        console.log("trying: \""+file+'"');
+        console.log("trying static: \""+file+'"');
 
         // check if file exists
         // send the first one that matches
